@@ -121,8 +121,8 @@ class SkeletonDifferenceState extends AnimationStateBase implements ISkeletonAni
 		var basePoses:Vector<JointPose> = _baseInput.getSkeletonPose(skeleton).jointPoses;
 		var diffPoses:Vector<JointPose> = _differenceInput.getSkeletonPose(skeleton).jointPoses;
 		var base:JointPose, diff:JointPose;
-		var basePos:Vector3D, diffPos:Vector3D;
-		var tr:Vector3D;
+		var basePos:Vector3D, diffPos:Vector3D, baseScale:Vector3D, diffScale:Vector3D;
+		var tr:Vector3D, sc:Vector3D;
 		var numJoints:Int = skeleton.numJoints;
 		
 		// :s
@@ -136,6 +136,8 @@ class SkeletonDifferenceState extends AnimationStateBase implements ISkeletonAni
 			diff = diffPoses[i];
 			basePos = base.translation;
 			diffPos = diff.translation;
+			baseScale = base.scale;
+			diffScale = diff.scale;
 			
 			_tempQuat.multiply(diff.orientation, base.orientation);
 			endPose.orientation.lerp(base.orientation, _tempQuat, _blendWeight);
@@ -144,6 +146,11 @@ class SkeletonDifferenceState extends AnimationStateBase implements ISkeletonAni
 			tr.x = basePos.x + _blendWeight*diffPos.x;
 			tr.y = basePos.y + _blendWeight*diffPos.y;
 			tr.z = basePos.z + _blendWeight*diffPos.z;
+			
+			sc = endPose.scale;
+			sc.x = baseScale.x + _blendWeight*diffScale.x;
+			sc.y = baseScale.y + _blendWeight*diffScale.y;
+			sc.z = baseScale.z + _blendWeight*diffScale.z;
 		}
 	}
 }

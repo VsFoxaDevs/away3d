@@ -61,7 +61,7 @@ class Quaternion
 	 * @param    qa    The first quaternion in the multiplication.
 	 * @param    qb    The second quaternion in the multiplication.
 	 */
-	public function multiply(qa:Quaternion, qb:Quaternion):Void
+	public inline function multiply(qa:Quaternion, qb:Quaternion):Void
 	{
 		var w1:Float = qa.w, x1:Float = qa.x, y1:Float = qa.y, z1:Float = qa.z;
 		var w2:Float = qb.w, x2:Float = qb.x, y2:Float = qb.y, z2:Float = qb.z;
@@ -360,7 +360,7 @@ class Quaternion
 	 * Copies the data from a quaternion into this instance.
 	 * @param q The quaternion to copy from.
 	 */
-	public function copyFrom(q:Quaternion):Void
+	public inline function copyFrom(q:Quaternion):Void
 	{
 		x = q.x;
 		y = q.y;

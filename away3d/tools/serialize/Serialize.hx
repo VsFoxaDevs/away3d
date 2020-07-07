@@ -135,6 +135,7 @@ class Serialize
 		serializer.beginObject(classNameFromInstance(jointPose), jointPose.name);
 		serializer.writeVector3D("translation", jointPose.translation);
 		serializer.writeQuaternion("orientation", jointPose.orientation);
+		serializer.writeVector3D("scale", jointPose.scale);
 		serializer.endObject();
 	}
 	

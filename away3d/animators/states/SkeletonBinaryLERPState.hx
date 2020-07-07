@@ -113,13 +113,9 @@ class SkeletonBinaryLERPState extends AnimationStateBase implements ISkeletonAni
 	{
 		_skeletonPoseDirty = false;
 		
-		var endPose:JointPose;
 		var endPoses:Vector<JointPose> = _skeletonPose.jointPoses;
 		var poses1:Vector<JointPose> = _inputA.getSkeletonPose(skeleton).jointPoses;
 		var poses2:Vector<JointPose> = _inputB.getSkeletonPose(skeleton).jointPoses;
-		var pose1:JointPose, pose2:JointPose;
-		var p1:Vector3D, p2:Vector3D;
-		var tr:Vector3D;
 		var numJoints:Int = skeleton.numJoints;
 		
 		// :s
@@ -128,18 +124,7 @@ class SkeletonBinaryLERPState extends AnimationStateBase implements ISkeletonAni
 		
 		for (i in 0...numJoints) {
 			if (endPoses[i] == null) endPoses[i] = new JointPose();
-			endPose = endPoses[i];
-			pose1 = poses1[i];
-			pose2 = poses2[i];
-			p1 = pose1.translation;
-			p2 = pose2.translation;
-			
-			endPose.orientation.lerp(pose1.orientation, pose2.orientation, _blendWeight);
-			
-			tr = endPose.translation;
-			tr.x = p1.x + _blendWeight*(p2.x - p1.x);
-			tr.y = p1.y + _blendWeight*(p2.y - p1.y);
-			tr.z = p1.z + _blendWeight*(p2.z - p1.z);
+			endPoses[i].interpolate(poses1[i], poses2[i], _blendWeight);
 		}
 	}
 }

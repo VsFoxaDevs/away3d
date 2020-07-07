@@ -288,12 +288,14 @@ class SkeletonAnimator extends AnimatorBase implements IAnimator
 		var pose:JointPose;
 		var quat:Quaternion;
 		var vec:Vector3D;
+		var scale:Vector3D;
 		var t:Float;
 		
 		for (i in 0..._numJoints) {
 			pose = globalPoses[i];
 			quat = pose.orientation;
 			vec = pose.translation;
+			scale = pose.scale;
 			ox = quat.x;
 			oy = quat.y;
 			oz = quat.z;
@@ -339,17 +341,17 @@ class SkeletonAnimator extends AnimatorBase implements IAnimator
 			m33 = raw[10];
 			m34 = raw[14];
 			
-			_globalMatrices[(mtxOffset)] = n11*m11 + n12*m21 + n13*m31;
+			_globalMatrices[(mtxOffset)] = (n11*m11 + n12*m21 + n13*m31) * scale.x;
 			_globalMatrices[(mtxOffset + 1)] = n11*m12 + n12*m22 + n13*m32;
 			_globalMatrices[(mtxOffset + 2)] = n11*m13 + n12*m23 + n13*m33;
 			_globalMatrices[(mtxOffset + 3)] = n11*m14 + n12*m24 + n13*m34 + vec.x;
 			_globalMatrices[(mtxOffset + 4)] = n21*m11 + n22*m21 + n23*m31;
-			_globalMatrices[(mtxOffset + 5)] = n21*m12 + n22*m22 + n23*m32;
+			_globalMatrices[(mtxOffset + 5)] = (n21*m12 + n22*m22 + n23*m32) * scale.y;
 			_globalMatrices[(mtxOffset + 6)] = n21*m13 + n22*m23 + n23*m33;
 			_globalMatrices[(mtxOffset + 7)] = n21*m14 + n22*m24 + n23*m34 + vec.y;
 			_globalMatrices[(mtxOffset + 8)] = n31*m11 + n32*m21 + n33*m31;
 			_globalMatrices[(mtxOffset + 9)] = n31*m12 + n32*m22 + n33*m32;
-			_globalMatrices[(mtxOffset + 10)] = n31*m13 + n32*m23 + n33*m33;
+			_globalMatrices[(mtxOffset + 10)] = (n31*m13 + n32*m23 + n33*m33) * scale.z;
 			_globalMatrices[(mtxOffset + 11)] = n31*m14 + n32*m24 + n33*m34 + vec.z;
 			
 			mtxOffset = Std.int(mtxOffset + 12);
@@ -457,7 +459,7 @@ class SkeletonAnimator extends AnimatorBase implements IAnimator
 	private function localToGlobalPose(sourcePose:SkeletonPose, targetPose:SkeletonPose, skeleton:Skeleton):Void
 	{
 		var globalPoses:Vector<JointPose> = targetPose.jointPoses;
-		var globalJointPose:JointPose;
+		var globalPose:JointPose;
 		var joints:Vector<SkeletonJoint> = skeleton.joints;
 		var len:Int = sourcePose.numJointPoses;
 		var jointPoses:Vector<JointPose> = sourcePose.jointPoses;
@@ -465,14 +467,6 @@ class SkeletonAnimator extends AnimatorBase implements IAnimator
 		var joint:SkeletonJoint;
 		var parentPose:JointPose;
 		var pose:JointPose;
-		var or:Quaternion;
-		var tr:Vector3D;
-		var t:Vector3D;
-		var q:Quaternion;
-		
-		var x1:Float, y1:Float, z1:Float, w1:Float;
-		var x2:Float, y2:Float, z2:Float, w2:Float;
-		var x3:Float, y3:Float, z3:Float;
 		
 		// :s
 		if (globalPoses.length != len)
@@ -482,25 +476,16 @@ class SkeletonAnimator extends AnimatorBase implements IAnimator
 			if (globalPoses[i] == null)
 				globalPoses[i] = new JointPose();
 			
-			globalJointPose = globalPoses[i];
+			globalPose = globalPoses[i];
 			
 			joint = joints[i];
 			parentIndex = joint.parentIndex;
 			pose = jointPoses[i];
 			
-			q = globalJointPose.orientation;
-			t = globalJointPose.translation;
-			
 			if (parentIndex < 0) {
-				tr = pose.translation;
-				or = pose.orientation;
-				q.x = or.x;
-				q.y = or.y;
-				q.z = or.z;
-				q.w = or.w;
-				t.x = tr.x;
-				t.y = tr.y;
-				t.z = tr.z;
+				globalPose.orientation.copyFrom(pose.orientation);
+				globalPose.translation.copyFrom(pose.translation);
+				globalPose.scale.copyFrom(pose.scale);
 			} else {
 				// append parent pose
 				parentPose = globalPoses[parentIndex];
@@ -510,42 +495,20 @@ class SkeletonAnimator extends AnimatorBase implements IAnimator
 				     globalPoses[parentIndex] = parentPose;
 				}
 				// rotate point
-				or = parentPose.orientation;
-				tr = pose.translation;
-				x2 = or.x;
-				y2 = or.y;
-				z2 = or.z;
-				w2 = or.w;
-				x3 = tr.x;
-				y3 = tr.y;
-				z3 = tr.z;
-				
-				w1 = -x2*x3 - y2*y3 - z2*z3;
-				x1 = w2*x3 + y2*z3 - z2*y3;
-				y1 = w2*y3 - x2*z3 + z2*x3;
-				z1 = w2*z3 + x2*y3 - y2*x3;
+				parentPose.orientation.rotatePoint(pose.translation, globalPose.translation);
 				
 				// append parent translation
-				tr = parentPose.translation;
-				t.x = -w1*x2 + x1*w2 - y1*z2 + z1*y2 + tr.x;
-				t.y = -w1*y2 + x1*z2 + y1*w2 - z1*x2 + tr.y;
-				t.z = -w1*z2 - x1*y2 + y1*x2 + z1*w2 + tr.z;
+				globalPose.translation.x += parentPose.translation.x;
+				globalPose.translation.y += parentPose.translation.y;
+				globalPose.translation.z += parentPose.translation.z;
 				
 				// append parent orientation
-				x1 = or.x;
-				y1 = or.y;
-				z1 = or.z;
-				w1 = or.w;
-				or = pose.orientation;
-				x2 = or.x;
-				y2 = or.y;
-				z2 = or.z;
-				w2 = or.w;
+				globalPose.orientation.multiply(parentPose.orientation, pose.orientation);
 				
-				q.w = w1*w2 - x1*x2 - y1*y2 - z1*z2;
-				q.x = w1*x2 + x1*w2 + y1*z2 - z1*y2;
-				q.y = w1*y2 - x1*z2 + y1*w2 + z1*x2;
-				q.z = w1*z2 + x1*y2 - y1*x2 + z1*w2;
+				// append parent scale
+				globalPose.scale.x = parentPose.scale.x * pose.scale.x;
+				globalPose.scale.y = parentPose.scale.y * pose.scale.y;
+				globalPose.scale.z = parentPose.scale.z * pose.scale.z;
 			}
 		}
 	}

@@ -50,6 +50,7 @@ class SkeletonUtils
 			diffPose.orientation.y = vec[1].y;
 			diffPose.orientation.z = vec[1].z;
 			diffPose.orientation.w = vec[1].w;
+			diffPose.scale.copyFrom(vec[2]);
 		}
 		
 		return diff;
