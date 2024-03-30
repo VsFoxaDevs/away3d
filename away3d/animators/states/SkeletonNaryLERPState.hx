@@ -129,16 +129,11 @@ class SkeletonNaryLERPState extends AnimationStateBase implements ISkeletonAnima
 	{
 		_skeletonPoseDirty = false;
 		
-		var weight:Float;
+		var weight:Float, weightSoFar:Float;
 		var endPoses:Vector<JointPose> = _skeletonPose.jointPoses;
 		var poses:Vector<JointPose>;
-		var endPose:JointPose, pose:JointPose;
-		var endTr:Vector3D, tr:Vector3D;
-		var endQuat:Quaternion, q:Quaternion;
 		var firstPose:Vector<JointPose> = null;
 		var i:Int;
-		var w0:Float, x0:Float, y0:Float, z0:Float;
-		var w1:Float, x1:Float, y1:Float, z1:Float;
 		var numJoints:Int = skeleton.numJoints;
 		
 		// :s
@@ -148,8 +143,10 @@ class SkeletonNaryLERPState extends AnimationStateBase implements ISkeletonAnima
 		for (j in 0..._skeletonAnimationNode.numInputs) {
 			weight = _blendWeights[j];
 			
-			if (weight == 0)
+			if (weight <= 0)
 				continue;
+			
+			weightSoFar += weight;
 			
 			poses = _inputs[j].getSkeletonPose(skeleton).jointPoses;
 			
@@ -159,58 +156,12 @@ class SkeletonNaryLERPState extends AnimationStateBase implements ISkeletonAnima
 					if (endPoses[i] == null) 
 						endPoses[i] = new JointPose();
 					
-					endPose = endPoses[i];
-					pose = poses[i];
-					q = pose.orientation;
-					tr = pose.translation;
-					
-					endQuat = endPose.orientation;
-					
-					endQuat.x = weight*q.x;
-					endQuat.y = weight*q.y;
-					endQuat.z = weight*q.z;
-					endQuat.w = weight*q.w;
-					
-					endTr = endPose.translation;
-					endTr.x = weight*tr.x;
-					endTr.y = weight*tr.y;
-					endTr.z = weight*tr.z;
+					endPoses[i].copyFrom(poses[i]);
+					weightSoFar = weights[i];
 				}
 			} else {
 				for (i in 0...skeleton.numJoints) {
-					endPose = endPoses[i];
-					pose = poses[i];
-					
-					q = firstPose[i].orientation;
-					x0 = q.x;
-					y0 = q.y;
-					z0 = q.z;
-					w0 = q.w;
-					
-					q = pose.orientation;
-					tr = pose.translation;
-					
-					x1 = q.x;
-					y1 = q.y;
-					z1 = q.z;
-					w1 = q.w;
-					// find shortest direction
-					if (x0*x1 + y0*y1 + z0*z1 + w0*w1 < 0) {
-						x1 = -x1;
-						y1 = -y1;
-						z1 = -z1;
-						w1 = -w1;
-					}
-					endQuat = endPose.orientation;
-					endQuat.x += weight*x1;
-					endQuat.y += weight*y1;
-					endQuat.z += weight*z1;
-					endQuat.w += weight*w1;
-					
-					endTr = endPose.translation;
-					endTr.x += weight*tr.x;
-					endTr.y += weight*tr.y;
-					endTr.z += weight*tr.z;
+					endPoses[i].interpolate(endPoses[i], poses[i], weight / weightSoFar);
 				}
 			}
 		}

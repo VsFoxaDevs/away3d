@@ -639,22 +639,13 @@ class DAEParser extends ParserBase
 				node = _root.findNodeById(skin.joints[j]);
 				if (node == null)
 					node = _root.findNodeBySid(skin.joints[j]);
-				pose = new JointPose();
-				
 				// Fix matrix
 				matrix = node.getAnimatedMatrix(t);
 				if(matrix == null)
 					matrix = node.matrix;
-
-				pose.name = skin.joints[j];
-				pose.orientation.fromMatrix(matrix);
-				pose.translation.copyFrom(matrix.position);
 				
-				if (Math.isNaN(pose.orientation.x)) {
-					if (identity == null)
-						identity = new Matrix3D();
-					pose.orientation.fromMatrix(identity);
-				}
+				pose = new JointPose(matrix);
+				pose.name = skin.joints[j];
 				
 				skeletonPose.jointPoses.push(pose);
 			}
